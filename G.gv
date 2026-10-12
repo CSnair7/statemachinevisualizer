@@ -1,0 +1,10 @@
+digraph G {
+	node [shape=doublecircle]
+	A [label=Alpha]
+	B [label=Beta]
+	C [label=Gamma]
+	A -> B
+	B -> C
+	A -> C
+	A -> A [label="2x"]
+}

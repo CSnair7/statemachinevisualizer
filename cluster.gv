@@ -1,0 +1,26 @@
+digraph G {
+	subgraph cluster_0 {
+		node [color=white style=filled]
+		color=lightgrey label="Group A" shape=circle style=filled
+		a0 -> a1
+		a1 -> a2
+		a2 -> a3
+	}
+	subgraph cluster_1 {
+		node [color=yellow style=filled]
+		color=red
+		b0 -> b1
+		b1 -> b2
+		b2 -> b3
+		label="process #2"
+	}
+	start -> a0
+	start -> b0
+	a1 -> b3
+	b2 -> a3
+	a3 -> a0
+	a3 -> end
+	b3 -> end
+	start [shape=diamond]
+	end [shape=Msquare]
+}
