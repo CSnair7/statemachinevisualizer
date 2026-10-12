@@ -1,9 +1,8 @@
-digraph G {
-	node [shape=square]
-	A [label=Alpha]
-	B [label=Beta]
-	C [label=Gamma]
+// My Flowchart
+digraph {
+	A [label=Start]
+	B [label=Process]
+	C [label=End]
 	A -> B
 	B -> C
-	A -> C
 }
