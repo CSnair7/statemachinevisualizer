@@ -1,2 +1,4 @@
-#folders to ignore
-venv
+# folders to ignore
+venv/
+output_directory/
+__pycache__/
