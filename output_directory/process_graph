@@ -1,0 +1,9 @@
+// My Flowchart
+digraph {
+	node [shape=square]
+	A [label=Start]
+	B [label=Process]
+	C [label=End]
+	A -> B [label=E1]
+	B -> C [label=E2]
+}
