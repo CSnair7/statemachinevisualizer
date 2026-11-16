@@ -13,7 +13,7 @@ The visualizer explains declared control-flow possibilities; it does not run a m
 - The current checkout contains two concrete maps: `standard_run.transitions` and `testing_run.transitions`. The latter has five states and seven declared outcome transitions. `standard_run` has three declared states; its Captain configuration identifies the stop state and the code also declares a transition from `Stop`, though `StateMachine.run()` exits before dispatching outcomes from the configured stop state. `testing_run` is defined but is not currently registered in Captain's `transition_maps`.
 - Reusable planning state classes in `abstract_states.py` are templates, not separate mission maps. Other repository state-like constructs (such as enum lifecycle or Boolean component flags) must not be mixed into the mission-map list.
 - `state_vis.py` loads and executes a selected Python module and draws a Graphviz graph. The repository also has `repo_state_vis.py`, which statically scans source and already understands several Python map patterns. Prefer its static-analysis approach for repository browsing: target files may import ROS modules or have unrelated module-level side effects.
-- Tkinter 8.6 is available with the project's Python. `customtkinter`, Pillow, and CairoSVG are not installed, so the UI uses standard `tkinter`/`ttk` and renders Graphviz's JSON layout directly on a `tk.Canvas`.
+- The visualizer uses CustomTkinter 6.0 (`customtkinter`/`ctk`) on top of Tk 8.6 for the dark mission-control shell. Pillow and CairoSVG are not required; Graphviz's JSON layout is still drawn directly on a `tk.Canvas` inside each CustomTkinter card.
 
 ## Goals
 
@@ -43,24 +43,28 @@ The visualizer explains declared control-flow possibilities; it does not run a m
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ Mission Map Visualizer                              [Repository path …] [Browse] [Scan] │
-│ Read-only static analysis · no repository execution · no web server         │
-├───────────────────┬──────────────────────────────────────────┬───────────────┤
-│ MAPS              │ ANALYSIS                                  │ INSPECTOR     │
-│ Planning          │ 1 warning · 2 maps · 100 files            │ Select a     │
-│  standard_run     │ ┌──────────────────────────────────────┐ │ state or     │
-│  testing_run      │ │ standard_run.transitions             │ │ transition   │
-│                   │ │ [graph canvas: pan / zoom / fit]     │ │              │
-│ LEGEND            │ │ States | Transitions                 │ │              │
-│ start / stop      │ └──────────────────────────────────────┘ │              │
-│ soft stop         │ ┌──────────────────────────────────────┐ │              │
-│                   │ │ testing_run.transitions              │ │              │
-│                   │ │ [graph canvas: pan / zoom / fit]     │ │              │
-│                   │ └──────────────────────────────────────┘ │              │
-└───────────────────┴──────────────────────────────────────────┴───────────────┘
+│ M  MICHIGAN ROBOSUB                                   ● STATIC ANALYSIS  READ-ONLY │
+├────────────────────┬─────────────────────────────────────────┬───────────────┤
+│ WORKSPACE          │ FLEET / MISSION PLANNER          [2 MAPS]│ INSPECTOR     │
+│ SCAN OVERVIEW      │ Mission maps                            │ Select a      │
+│ 2   mission maps   │ Explore state flow without starting ROS  │ state or      │
+│ PY FILES  WARNINGS │ ┌─────────────────────────────────────┐ │ transition    │
+│ MAPS               │ │ [Repository path …] [Browse] [Scan] │ │               │
+│  standard_run      │ │ Focus [All maps]  Direction [TB]    │ │ Source/route  │
+│  testing_run       │ └─────────────────────────────────────┘ │ Conditions    │
+│ MAP KEYS           │ ┌─────────────────────────────────────┐ │ Warnings      │
+│ start / stop       │ │ standard_run.transitions            │ │               │
+│ inferred / soft    │ │ [graph canvas: pan / zoom / fit]    │ │               │
+│                    │ │ States | Transitions | Warnings     │ │               │
+│                    │ └─────────────────────────────────────┘ │               │
+│                    │ ┌─────────────────────────────────────┐ │               │
+│                    │ │ testing_run.transitions             │ │               │
+│                    │ │ [graph canvas: pan / zoom / fit]    │ │               │
+│                    │ └─────────────────────────────────────┘ │               │
+└────────────────────┴─────────────────────────────────────────┴───────────────┘
 ```
 
-The window opens at 1450×900 with a 1120×700 minimum. The left navigation and right inspector stay fixed while the center column scrolls. The light slate/teal theme is defined in one place in `mission_map_gui.py`; no external stylesheet is used.
+The window opens centered at up to 1460×900 (1200×710 on a 1280×800 display) with a 1150×700 minimum. The left navigation and right inspector stay fixed while the center column scrolls. The palette is a high-contrast mission-control navy with cyan selection states and a maize Michigan RoboSub accent; it is defined in one place in `mission_map_gui.py`. No external stylesheet, image, browser, or HTTP server is used.
 
 ## Map and graph behavior
 
@@ -84,24 +88,24 @@ The window opens at 1450×900 with a 1120×700 minimum. The left navigation and 
 
 ## Implementation
 
-Implemented as a local Tkinter/ttk desktop application:
+Implemented as a local CustomTkinter desktop application:
 
-- `mission_map_ui.py` — static discovery, payload construction, Graphviz graph/layout adapter, layout parsing, and SVG/PNG byte export. No HTTP server or network listener.
-- `mission_map_gui.py` — the desktop window: header controls, background scan, scrollable map cards, grouped map navigation, Graphviz canvas with pan/zoom, state/transition tables, inspector, notices, legend, and export dialogs.
-- `test_mission_map_ui.py` — focused checks for discovery, focus filtering, metadata, Graphviz layout/IDs, layout parsing, read-only scanning, and invalid roots.
+- `mission_map_gui.py` — self-contained static core (discovery, payload construction, Graphviz graph/layout adapter, layout parsing, and SVG/PNG byte export) plus the mission-control window: header, repository/focus controls, background scan, scrollable map cards, grouped map navigation, Graphviz canvas with pan/zoom, state/transition tables, inspector, notices, legend, and export dialogs. It does not import `mission_map_ui`.
+- `mission_map_ui.py` — legacy CLI entry point that delegates to `launch_gui`; kept for compatibility.
+- `test_mission_map_ui.py` — focused checks for discovery, focus filtering, metadata, Graphviz layout/IDs, layout parsing, read-only scanning, and invalid roots against the self-contained core in `mission_map_gui.py`.
 
 Run it with:
 
 ```sh
-python mission_map_ui.py --root mrobosub
+python mission_map_gui.py --root mrobosub
 # or, when ./mrobosub is present:
-python mission_map_ui.py
+python mission_map_gui.py
 
 # optional focused start (repository-relative file, map name, or map variable):
-python mission_map_ui.py --root mrobosub --focus testing_run.py
+python mission_map_gui.py --root mrobosub --focus testing_run.py
 ```
 
-`mission_map_ui.py` is the entry point; it imports `mission_map_gui` only when opening the window. The scanner reuses `repo_state_vis.Repository` for static analysis. Graphviz's `dot` provides coordinates and edge geometry; if it is unavailable, the application still lists maps and offers complete state/transition tables. No React, npm, browser, or web server is required.
+`mission_map_gui.py` is the preferred entry point; `mission_map_ui.py` remains a legacy compatibility entry point. The scanner reuses `repo_state_vis.Repository` for static analysis. Graphviz's `dot` provides coordinates and edge geometry; if it is unavailable, the application still lists maps and offers complete state/transition tables. No React, npm, browser, or web server is required.
 
 ## Acceptance criteria
 

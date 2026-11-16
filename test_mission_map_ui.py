@@ -10,7 +10,7 @@ import textwrap
 import unittest
 from pathlib import Path
 
-from mission_map_ui import (
+from mission_map_gui import (
     build_map_graph,
     discover,
     graphviz_available,
