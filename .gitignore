@@ -1,4 +1,5 @@
-# folders to ignore
 venv/
 output_directory/
+mrobosub/
 __pycache__/
+.claude/
